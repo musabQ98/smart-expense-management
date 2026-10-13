@@ -1,0 +1,220 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة الموظفين - منصة المصاريف</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            background-image: url('css/landing-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .landing-container {
+            background: rgba(30, 40, 50, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        h1 { margin-bottom: 10px; color: #3498db; }
+        .subtitle { color: #bdc3c7; margin-bottom: 30px; font-size: 16px; }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #555;
+            background-color: #f0f3f5;
+            color: #333;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        select {
+            cursor: pointer;
+            background-color: #fff;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 15px;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 25px;
+            font-size: 14px;
+            color: #3498db;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .back-link:hover { color: #fff; }
+
+        #messageBox {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+            font-size: 14px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="landing-container">
+        <h1>بوابة الموظفين</h1>
+        <p class="subtitle">الرجاء تسجيل الدخول للوصول للنظام</p>
+
+        <form id="empLoginForm">
+            
+            <div class="form-group">
+                <label>القسم / الصلاحية</label>
+                <select id="role" required>
+                    <option value="" disabled selected>اختر القسم...</option>
+                    <option value="SystemAdmin">الإدارة العليا (System Admin)</option>
+                    <option value="SupportStaff">الدعم الفني (Support Staff)</option>
+                    <option value="ContentAdmin">إدارة المحتوى (Content Admin)</option> </select>
+            </div>
+
+            <div class="form-group">
+                <label>البريد الإلكتروني الوظيفي</label>
+                <input type="email" id="email" required placeholder="emp@example.com">
+            </div>
+
+            <div class="form-group">
+                <label>كلمة المرور</label>
+                <input type="password" id="password" required placeholder="**">
+            </div>
+
+            <button type="submit" class="btn-primary">تسجيل الدخول</button>
+            
+            <div id="messageBox"></div>
+        </form>
+
+        <a href="index.html" class="back-link">عودة للصفحة الرئيسية</a>
+    </div>
+
+    <script>
+        const messageBox = document.getElementById('messageBox');
+
+        document.getElementById('empLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            messageBox.style.display = 'none';
+            messageBox.textContent = '';
+
+            // تم الإبقاء على جلب الدور الذي اختاره المستخدم
+            const role = document.getElementById('role').value; 
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!role) {
+                messageBox.style.display = 'block';
+                messageBox.style.backgroundColor = '#e74c3c';
+                messageBox.style.color = '#fff';
+                messageBox.textContent = 'الرجاء اختيار القسم الوظيفي';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/employee-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, role })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    messageBox.style.display = 'block';
+                    messageBox.style.backgroundColor = '#27ae60';
+                    messageBox.textContent = '✅ تم تسجيل الدخول بنجاح';
+
+                    localStorage.setItem('empID', data.employee.employeeID);
+                    localStorage.setItem('empName', data.employee.name);
+                    localStorage.setItem('empRole', data.employee.role);
+
+                    setTimeout(() => {
+                        // الآن نستخدم الدور الذي أكدته قاعدة البيانات للتوجيه (data.employee.role)
+                        const employeeRole = data.employee.role; 
+
+                        if (employeeRole === 'SystemAdmin') {
+                            window.location.href = 'admin-dashboard.html';
+                        } else if (employeeRole === 'SupportStaff') {
+                            window.location.href = 'support-dashboard.html';
+                        } else if (employeeRole === 'ContentAdmin') {
+                            window.location.href = 'content-dashboard.html';
+                        } else {
+                            // رسالة لمنع الدخول إذا كان هناك دور في القاعدة غير مخصص للوحة
+                            alert('تم تسجيل الدخول، لكن دورك غير مرتبط بأي لوحة تحكم.');
+                        }
+                    }, 1000);
+
+                } else {
+                    messageBox.style.display = 'block';
+                    messageBox.style.backgroundColor = '#e74c3c';
+                    messageBox.textContent = '❌ فشل تسجيل الدخول. تأكد من أن الدور المحدد صحيح مع بيانات الاعتماد.';
+                }
+
+            } catch (error) {
+                console.error('Network Error:', error);
+                messageBox.style.display = 'block';
+                messageBox.style.backgroundColor = '#e74c3c';
+                messageBox.textContent = 'خطأ في الاتصال بالسيرفر. تحقق من تشغيل Node.js.';
+            }
+        });
+    </script>
+
+</body>
+</html>
+
+
+

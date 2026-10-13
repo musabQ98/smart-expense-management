@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الملف الشخصي</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { 
+            background-image: url('css/profile-bg.jpg'); 
+            background-size: 100% 100%;
+            background-attachment: fixed;
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        .status-msg {
+            margin-top: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            display: none;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6fb; }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-family: inherit;
+            resize: vertical;
+            height: 100px;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 768px) {
+            .profile-grid { grid-template-columns: 1fr; }
+            .full-width { grid-column: span 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-brand"> Smart Expense Pro</div>
+        <div class="nav-links">
+            <a href="user-dashboard.html">الرئيسية</a>
+            <a href="reports.html">التقارير</a>
+            <a href="profile.html" class="active">الملف الشخصي</a>
+            <a href="#" onclick="logout()" class="logout-btn">خروج</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <div class="profile-header">
+            <h2 id="display-name" style="margin:0; border:none; color:white; font-size: 28px;">جاري التحميل...</h2>
+            <p id="display-email" style="margin-top:10px; opacity:0.9; font-size: 16px;">user@example.com</p>
+        </div>
+
+        <div class="profile-grid">
+            
+            <div class="card-box">
+                <h3> تعديل البيانات الشخصية</h3>
+                <div class="form-group">
+                    <label>الاسم الكامل</label>
+                    <input type="text" id="edit-name">
+                </div>
+                <div class="form-group">
+                    <label>البريد الإلكتروني</label>
+                    <input type="email" id="edit-email">
+                </div>
+                <button onclick="updateProfile()" class="btn-primary btn-blue">حفظ التغييرات</button>
+                <div id="msg-info" class="status-msg"></div>
+            </div>
+
+            <div class="card-box">
+                <h3> الأمان وكلمة المرور</h3>
+                <div class="form-group">
+                    <label>كلمة المرور الحالية</label>
+                    <input type="password" id="current-pass" placeholder="**">
+                </div>
+                <div class="form-group">
+                    <label>كلمة المرور الجديدة</label>
+                    <input type="password" id="new-pass" placeholder="**">
+                </div>
+                <button onclick="changePassword()" class="btn-primary btn-orange">تغيير كلمة المرور</button>
+                <div id="msg-pass" class="status-msg"></div>
+            </div>
+
+            <div class="card-box full-width">
+                <h3>  تواصل مع الدعم الفني</h3>
+                <div class="form-group">
+                    <label>عنوان التذكرة / المشكلة</label>
+                    <input type="text" id="comp-subject" placeholder="مثلاً: مشكلة في تسجيل الدخول">
+                </div>
+                <div class="form-group">
+                    <label>التفاصيل</label>
+                    <textarea id="comp-desc" placeholder="اشرح لنا المشكلة بالتفصيل..."></textarea>
+                </div>
+                <button onclick="submitComplaint()" class="btn-primary btn-green">إرسال التذكرة</button>
+                <div id="msg-comp" class="status-msg"></div>
+            </div>
+
+        </div>
+        
+        <div class="card-box full-width" style="margin-top: 25px;">
+            <h3> سجل التذاكر والدعم الفني</h3>
+            <table class="data-table" style="width:100%; margin-top:15px;">
+                <thead>
+                    <tr>
+                        <th style="width:10%;">رقم التذكرة</th>
+                        <th style="width:20%;">العنوان</th>
+                        <th style="width:15%;">الحالة</th>
+                        <th style="width:45%;">رد الموظف</th>
+                        <th style="width:10%;">التاريخ</th>
+                    </tr>
+                </thead>
+                <tbody id="userTicketsBody">
+                    <tr><td colspan="5" style="text-align:center; color:#777;">جاري جلب سجل التذاكر...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        </div>
+
+    <script>
+        const userID = localStorage.getItem('userID');
+        if (!userID) window.location.href = 'index.html';
+
+        function showMessage(elementId, message, isSuccess = true) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.className = isSuccess ? 'status-msg success' : 'status-msg error';
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 3000);
+        }
+
+        async function loadProfile() {
+            try {
+                const res = await fetch('/api/user-info/' + userID);
+                const user = await res.json();
+                
+                document.getElementById('display-name').textContent = user.name;
+                document.getElementById('display-email').textContent = user.email;
+
+                document.getElementById('edit-name').value = user.name;
+                document.getElementById('edit-email').value = user.email;
+                
+                localStorage.setItem('userName', user.name);
+
+            } catch(e) { console.error(e); }
+        }
+
+        async function updateProfile() {
+            const name = document.getElementById('edit-name').value;
+            const email = document.getElementById('edit-email').value;
+
+            if(!name || !email) return showMessage('msg-info', 'جميع الحقول مطلوبة', false);
+
+            try {
+                const res = await fetch('/api/update-profile/' + userID, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email })
+                });
+                const data = await res.json();
+                
+                if(data.success) {
+                    showMessage('msg-info', '✅ تم تحديث البيانات بنجاح');
+                    loadProfile();
+                } else {
+                    showMessage('msg-info', 'حدث خطأ أثناء التحديث', false);
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        async function changePassword() {
+            const currentPass = document.getElementById('current-pass').value;
+            const newPass = document.getElementById('new-pass').value;
+
+            if(!currentPass || !newPass) return showMessage('msg-pass', 'الرجاء تعبئة الحقول', false);
+
+            try {
+                const res = await fetch('/api/change-password/' + userID, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentPassword: currentPass, newPassword: newPass })
+                });
+                const data = await res.json();
+                
+                if(data.success) {
+                    showMessage('msg-pass', '✅ تم تغيير كلمة المرور بنجاح');
+                    document.getElementById('current-pass').value = '';
+                    document.getElementById('new-pass').value = '';
+                } else {
+                    showMessage('msg-pass', '❌ كلمة المرور الحالية غير صحيحة', false);
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        async function submitComplaint() {
+            const subject = document.getElementById('comp-subject').value;
+            const desc = document.getElementById('comp-desc').value;
+            const date = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+            if(!subject || !desc) return showMessage('msg-comp', 'الرجاء تعبئة جميع الحقول', false);
+
+            try {
+                const res = await fetch('/api/add-complaint', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        userID, 
+                        subject, 
+                        description: desc, 
+                        date,
+                        status: 'مفتوحة' 
+                    })
+                });
+                const data = await res.json();
+                
+                if(data.success) {
+                    showMessage('msg-comp', '✅ تم رفع التذكرة بنجاح، ستتم مراجعتها قريباً');
+                    document.getElementById('comp-subject').value = '';
+                    document.getElementById('comp-desc').value = '';
+                    loadUserTickets(); 
+                } else {
+                    showMessage('msg-comp', 'حدث خطأ أثناء الإرسال', false);
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+
+        
+      
+       
+        
+        function getStatusBadge(status) {
+            let color = '#ccc';
+            if (status === 'مفتوحة') color = '#e74c3c';
+            else if (status === 'قيد التنفيذ') color = '#f39c12';
+            else if (status === 'مغلقة') color = '#27ae60';
+            
+            return `<span style="background:${color}; color:white; padding:4px 8px; border-radius:4px; font-weight:bold; font-size:12px;">${status}</span>`;
+        }
+
+        async function loadUserTickets() {
+            const tbody = document.getElementById('userTicketsBody');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777;">جاري جلب سجل التذاكر...</td></tr>';
+            
+            try {
+                const res = await fetch(`/api/user/tickets/${userID}`);
+                const data = await res.json();
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">لم تقم بإرسال أي تذاكر بعد.</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = data.map(ticket => {
+                    const responseText = ticket.employee_response || '<span style="color:#777;">لم يتم الرد بعد...</span>';
+                    
+                    return `
+                        <tr>
+                            <td>#${ticket.ticketID}</td>
+                            <td>${ticket.subject}</td>
+                            <td>${getStatusBadge(ticket.status)}</td>
+                            <td>${responseText}</td>
+                            <td>${new Date(ticket.dateCreated).toLocaleDateString('ar-EG')}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch(e) { 
+                console.error('Error fetching user tickets:', e);
+                tbody.innerHTML = '<tr><td colspan="5" style="color:red; text-align:center;">خطأ في الاتصال بسجل التذاكر.</td></tr>';
+            }
+        }
+       
+        
+        
+
+        loadProfile();
+        loadUserTickets(); 
+    </script>
+</body>
+</html>

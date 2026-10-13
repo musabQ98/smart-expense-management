@@ -1,0 +1,228 @@
+
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لوحة الإدارة العليا</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        
+        body { 
+            background-color: #f0f2f5; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-image: url('css/admin-bg.jpg'); 
+            background-size: cover; 
+            background-attachment: fixed;
+            background-position: center;
+        }
+        
+        .dashboard-header { 
+            background: linear-gradient(135deg, #2c3e50, #4ca1af); 
+            color: white; padding: 20px 40px; 
+            display: flex; justify-content: space-between; align-items: center; 
+        }
+
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+
+        .filter-box {
+            background: white; padding: 20px; border-radius: 10px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px;
+            display: flex; align-items: center; gap: 15px; flex-wrap: wrap;
+        }
+
+        .stat-display {
+            background: #e8f6f3; color: #27ae60; padding: 10px 20px; 
+            border-radius: 8px; font-weight: bold; font-size: 20px; border: 1px solid #27ae60;
+        }
+
+        .section-title { margin: 30px 0 15px 0; color: #34495e; border-right: 5px solid #3498db; padding-right: 10px; font-size: 20px; }
+        
+        .data-table { 
+            width: 100%; background: white; border-radius: 10px; 
+            border-collapse: collapse; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+        }
+        .data-table th, .data-table td { padding: 15px; text-align: right; border-bottom: 1px solid #eee; }
+        .data-table th { background-color: #f8f9fa; color: #555; }
+        .data-table tr:hover { background-color: #fafafa; }
+
+        select, input[type="date"] { padding: 8px; border-radius: 5px; border: 1px solid #ddd; }
+        .btn-filter { background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-header">
+        <div>
+            <h2 style="margin:0;"> لوحة القيادة</h2>
+            <span id="adminName" style="font-size:14px; opacity:0.9;">أهلاً بك</span>
+        </div>
+        <button onclick="logout()" style="background:rgba(255,255,255,0.2); color:white; border:none; padding:8px 20px; border-radius:5px; cursor:pointer;">خروج</button>
+    </div>
+    
+    <div class="container">
+        
+        <h3 class="section-title"> تحليل المستخدمين</h3>
+        <div class="filter-box">
+            <label>اختر الفترة:</label>
+            <select id="timeFilter" onchange="toggleCustomDate()">
+                <option value="all">كل الأوقات</option>
+                <option value="today">اليوم</option>
+                <option value="week">آخر 7 أيام</option>
+                <option value="month">آخر 30 يوم</option>
+                <option value="year">آخر سنة</option>
+                <option value="custom">فترة مخصصة...</option>
+            </select>
+
+            <div id="customDateInputs" style="display:none;">
+                <input type="date" id="startDate"> إلى <input type="date" id="endDate">
+            </div>
+
+            <button onclick="getUserStats()" class="btn-filter">عرض النتيجة</button>
+
+            <div style="margin-right: auto;">
+                عدد المستخدمين: <span id="userCountDisplay" class="stat-display">0</span>
+            </div>
+        </div>
+
+        <h3 class="section-title"> فريق العمل (الموظفين)</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>الرقم</th>
+                    <th>الاسم</th>
+                    <th>القسم </th>
+                    <th>البريد الإلكتروني</th>
+                    <th>رقم الهاتف</th>
+                </tr>
+            </thead>
+            <tbody id="employeesBody">
+                <tr><td colspan="5" style="text-align:center;">جاري التحميل...</td></tr>
+            </tbody>
+        </table>
+
+        <h3 class="section-title"> التقارير الواردة</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>المرسل</th>
+                    <th>العنوان</th>
+                    <th>المحتوى</th>
+                    <th>التاريخ</th>
+                    <th>الحالة</th>
+                </tr>
+            </thead>
+            <tbody id="reportsBody">
+                <tr><td colspan="6" style="text-align:center;">جاري التحميل...</td></tr>
+            </tbody>
+        </table>
+
+    </div>
+
+    <script>
+        
+        if (localStorage.getItem('empRole') !== 'SystemAdmin') {
+            window.location.href = 'index.html';
+        }
+
+        document.getElementById('adminName').textContent = 'المدير: ' + localStorage.getItem('empName');
+
+        function toggleCustomDate() {
+            const val = document.getElementById('timeFilter').value;
+            document.getElementById('customDateInputs').style.display = (val === 'custom') ? 'inline-block' : 'none';
+        }
+
+        
+        async function getUserStats() {
+            const period = document.getElementById('timeFilter').value;
+            let url = `/api/admin/user-stats?period=${period}`;
+
+            if (period === 'custom') {
+                const start = document.getElementById('startDate').value;
+                const end = document.getElementById('endDate').value;
+                if(!start || !end) return alert('الرجاء تحديد التاريخ من وإلى');
+                url += `&startDate=${start}&endDate=${end}`;
+            }
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                document.getElementById('userCountDisplay').textContent = data.count;
+            } catch(e) { 
+                document.getElementById('userCountDisplay').textContent = 'خطأ';
+                console.error(e); 
+            }
+        }
+
+        async function loadEmployees() {
+            try {
+                const res = await fetch('/api/all-employees');
+                const data = await res.json();
+                const tbody = document.getElementById('employeesBody');
+                
+                if(data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5">لا يوجد موظفين</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.map(emp => {
+                    let roleDisplay = emp.role;
+                    if(emp.role === 'SupportStaff') roleDisplay = 'الدعم الفني';
+                    if(emp.role === 'ContentAdmin') roleDisplay = 'إدارة المحتوى';
+                    if(emp.role === 'SystemAdmin') roleDisplay = 'الإدارة العليا';
+
+                    return `
+                        <tr>
+                            <td>#${emp.employeeID}</td>
+                            <td><strong>${emp.name}</strong></td>
+                            <td><span style="background:#e8f8f5; color:#1abc9c; padding:3px 8px; border-radius:5px;">${roleDisplay}</span></td>
+                            <td>${emp.email}</td>
+                            <td>${emp.phone || 'غير محدد'}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch(e) { 
+                document.getElementById('employeesBody').innerHTML = '<tr><td colspan="5" style="color:red; text-align:center;">خطأ في جلب بيانات الموظفين</td></tr>';
+                console.error(e); 
+            }
+        }
+
+        async function loadReports() {
+            try {
+                const res = await fetch('/api/reports');
+                const reports = await res.json();
+                const tbody = document.getElementById('reportsBody');
+
+                if(reports.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">لا توجد تقارير</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = reports.map(r => `
+                    <tr>
+                        <td>#${r.reportID}</td>
+                        <td>${r.empName}</td>
+                        <td>${r.reportType}</td> <td style="color:#666;">${r.content}</td>
+                        <td>${new Date(r.dateCreated).toLocaleDateString('ar-EG')}</td>
+                        <td><span style="color:#27ae60; font-weight:bold;">${r.status}</span></td>
+                    </tr>
+                `).join('');
+            } catch(e) { 
+                document.getElementById('reportsBody').innerHTML = '<tr><td colspan="6" style="color:red; text-align:center;">خطأ في جلب التقارير</td></tr>';
+                console.error(e); 
+            }
+        }
+
+        function logout() { localStorage.clear(); window.location.href = 'employee-login.html'; }
+
+        
+        getUserStats();
+        loadEmployees();
+        loadReports();
+    </script>
+</body>
+</html>
+
+
+

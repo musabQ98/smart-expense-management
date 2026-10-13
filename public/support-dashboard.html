@@ -1,0 +1,394 @@
+
+
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لوحة الدعم الفني</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        
+        body { 
+            background-color: #f5f7fa; 
+            font-family: sans-serif; 
+            margin: 0; 
+        }
+        
+        .header {
+            background-color: #2c3e50; 
+            color: white; 
+            padding: 15px 30px;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+        }
+
+        .main-container {
+            max-width: 1200px; 
+            margin: 30px auto; 
+            padding: 0 20px;
+            display: grid; 
+            grid-template-columns: 2fr 1fr; 
+            gap: 20px;
+        }
+
+        .box {
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        h3 { 
+            margin-top: 0; 
+            color: #34495e; 
+            border-bottom: 2px solid #3498db; 
+            padding-bottom: 10px; 
+            display: inline-block; 
+        }
+
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 10px; 
+        }
+        
+        th, td { 
+            padding: 12px; 
+            border-bottom: 1px solid #eee; 
+            text-align: right; 
+        }
+        
+        th { 
+            background-color: #f8f9fa; 
+            color: #555; 
+        }
+        
+        
+        .status-badge { 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            color: white; 
+            font-size: 12px; 
+        }
+        .open { background-color: #e74c3c; }
+        .process { background-color: #f39c12; }
+        .closed { background-color: #27ae60; }
+
+        
+        .btn { 
+            padding: 8px 15px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            color: white; 
+        }
+        .btn-reply { background-color: #3498db; }
+        .btn-send { 
+            background-color: #2c3e50; 
+            width: 100%; 
+            margin-top: 10px; 
+        }
+
+        
+        input, textarea, select {
+            width: 100%; 
+            padding: 10px; 
+            margin-bottom: 10px;
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+            box-sizing: border-box;
+        }
+
+       
+        #replyModal {
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            background: rgba(0,0,0,0.5); 
+            align-items: center; 
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white; 
+            padding: 20px; 
+            width: 400px; 
+            border-radius: 8px; 
+            position: relative;
+        }
+
+        
+        #statusModal {
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            background: rgba(0,0,0,0.5); 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 2000;
+        }
+        
+        .status-content {
+            background: white; 
+            padding: 25px; 
+            width: 350px; 
+            border-radius: 10px; 
+            text-align: center;
+        }
+        
+        .status-icon { 
+            font-size: 40px; 
+            display: block; 
+            margin-bottom: 10px; 
+        }
+        
+        .status-msg { 
+            font-size: 18px; 
+            font-weight: bold; 
+            margin-bottom: 20px; 
+            display: block; 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2>🎧 الدعم الفني</h2>
+        <div>
+            <span id="empName">جاري التحميل...</span>
+            <button onclick="logout()" class="btn" style="background:#c0392b; margin-right:10px;">خروج</button>
+        </div>
+    </div>
+
+    <div class="main-container">
+
+        <div class="box">
+            <h3> التذاكر الواردة</h3>
+            <button onclick="fetchTickets()" style="float:left; cursor:pointer;">🔄 تحديث</button>
+            <table id="ticketsTable">
+                <thead>
+                    <tr>
+                        <th>رقم التذكرة</th>
+                        <th>اسم المستخدم</th>
+                        <th>الشكوى</th>
+                        <th>الحالة</th>
+                        <th>إجراء</th>
+                    </tr>
+                </thead>
+                <tbody id="ticketsBody">
+                    <tr><td colspan="5">جاري جلب البيانات...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="box">
+            <h3> رفع تقرير للإدارة</h3>
+            <label>عنوان التقرير:</label>
+            <input type="text" id="reportSubject" placeholder="مثلاً: مشاكل تقنية">
+            
+            <label>موضوع التقرير (التفاصيل):</label>
+            <textarea id="reportContent" style="height: 120px;" placeholder="اكتب تفاصيل التقرير هنا..."></textarea>
+            
+            <button onclick="sendReport()" class="btn btn-send">إرسال التقرير</button>
+        </div>
+
+    </div>
+
+    <div id="replyModal">
+        <div class="modal-content">
+            <h3>الرد على التذكرة #<span id="modalTicketID"></span></h3>
+            <textarea id="replyText" style="height:100px" placeholder="اكتب ردك للمستخدم هنا..."></textarea>
+            
+            <label>إغلاق التذكرة؟</label>
+            <input type="checkbox" id="closeTicket" style="width: auto; margin-right: 10px;"> نعم، أرسل الرد وأغلق التذكرة.
+            
+            <button onclick="submitReply()" class="btn btn-reply" style="width:100%">حفظ الرد</button>
+            <button onclick="closeModal()" class="btn" style="background:#7f8c8d; width:100%; margin-top:5px;">إلغاء</button>
+        </div>
+    </div>
+
+    <div id="statusModal">
+        <div class="status-content">
+            <span id="statusIcon" class="status-icon"></span>
+            <span id="statusMsg" class="status-msg"></span>
+            <button onclick="document.getElementById('statusModal').style.display='none'" class="btn" style="background:#34495e;">حسناً</button>
+        </div>
+    </div>
+
+    <script>
+        const empID = localStorage.getItem('empID');
+        const empName = localStorage.getItem('empName');
+        
+        if (!empID) {
+            window.location.href = 'index.html';
+        }
+        document.getElementById('empName').textContent = 'الموظف: ' + empName;
+
+        let currentTicketId = null; 
+
+        function showStatus(msg, isSuccess) {
+            const modal = document.getElementById('statusModal');
+            const icon = document.getElementById('statusIcon');
+            const text = document.getElementById('statusMsg');
+            
+            text.textContent = msg;
+            
+            if (isSuccess) {
+                icon.textContent = "✅";
+                text.style.color = "#27ae60";
+            } else {
+                icon.textContent = "❌";
+                text.style.color = "#c0392b";
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        async function fetchTickets() {
+            const tbody = document.getElementById('ticketsBody');
+            tbody.innerHTML = '<tr><td colspan="5">جاري التحميل...</td></tr>';
+
+            try {
+                const response = await fetch('/api/tickets');
+                const data = await response.json();
+
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5">لا توجد تذاكر حالياً ✅</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                data.forEach(ticket => {
+                    const tID = ticket.ticketID || ticket.ticketid;
+                    
+                    let colorClass = 'open';
+                    if(ticket.status === 'قيد التنفيذ') colorClass = 'process';
+                    if(ticket.status === 'مغلقة') colorClass = 'closed';
+
+                    const displayID = tID ? tID : '<span style="color:red">خطأ</span>';
+
+                    html += `
+                        <tr>
+                            <td>#${displayID}</td>
+                            <td>${ticket.userName} <br> <small style="color:#777;">(ID: ${ticket.userID})</small></td>
+                            <td><strong>${ticket.subject}</strong><br><small>${ticket.description}</small></td>
+                            <td><span class="status-badge ${colorClass}">${ticket.status}</span></td>
+                            <td>
+                                <button onclick="openReplyModal(${tID})" class="btn btn-reply">رد</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = '<tr><td colspan="5" style="color:red">خطأ في الاتصال بالسيرفر!</td></tr>';
+            }
+        }
+
+        function openReplyModal(id) {
+            if (!id) return alert("رقم التذكرة غير معروف!");
+            
+            currentTicketId = id;
+            document.getElementById('modalTicketID').textContent = id;
+            document.getElementById('replyModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('replyModal').style.display = 'none';
+        }
+
+        async function submitReply() {
+            const text = document.getElementById('replyText').value;
+            const shouldClose = document.getElementById('closeTicket').checked; 
+            
+            let newStatus = 'قيد التنفيذ'; 
+            
+            if (shouldClose) {
+                newStatus = 'مغلقة'; 
+            }
+            
+            if(!text) return showStatus("الرجاء كتابة الرد!", false);
+
+            try {
+                const res = await fetch(`/api/tickets/${currentTicketId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        status: newStatus, 
+                        response: text,
+                        employeeID: empID
+                    })
+                });
+                
+                const result = await res.json();
+
+                if(result.success) {
+                    closeModal(); 
+                    showStatus("تم حفظ الرد وتحديث الحالة إلى (" + newStatus + ") ✅", true); 
+                    fetchTickets();
+                    document.getElementById('replyText').value = '';
+                    document.getElementById('closeTicket').checked = false;
+                } else {
+                    showStatus("فشل الحفظ: " + result.message, false);
+                }
+            } catch(e) { 
+                showStatus("خطأ في الاتصال بالسيرفر", false); 
+            }
+        }
+
+        async function sendReport() {
+            const subject = document.getElementById('reportSubject').value;
+            const content = document.getElementById('reportContent').value;
+
+            if(!subject || !content) return showStatus("الرجاء تعبئة جميع الحقول", false);
+
+            try {
+                const res = await fetch('/api/submit-report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        employeeID: empID,
+                        subject: subject,
+                        content: content
+                    })
+                });
+
+                const result = await res.json();
+
+                if(result.success) {
+                    showStatus("تم إرسال التقرير للمدير بنجاح ✅", true);
+                    document.getElementById('reportSubject').value = '';
+                    document.getElementById('reportContent').value = '';
+                } else {
+                    showStatus("فشل الإرسال!", false);
+                }
+            } catch(e) { 
+                showStatus("خطأ في الاتصال", false);
+            }
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'employee-login.html';
+        }
+
+        fetchTickets();
+
+    </script>
+</body>
+</html>
+
+
+

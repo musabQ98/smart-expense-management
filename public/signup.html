@@ -1,0 +1,186 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء حساب جديد - منصة المصاريف</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            background-image: url('css/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .landing-container {
+            background: rgba(44, 62, 80, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        h1 { margin-bottom: 10px; color: #2ecc71; }
+        .subtitle { color: #bdc3c7; margin-bottom: 30px; font-size: 16px; }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .btn-primary {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            background-color: #219150;
+        }
+
+        .links-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        
+        .links-container a, .back-link {
+            color: #2ecc71;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .links-container a:hover, .back-link:hover { color: #fff; }
+        .back-link { display: block; margin-top: 25px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="landing-container">
+        <h1>حساب جديد</h1>
+        <p class="subtitle">ابدأ رحلتك المالية معنا اليوم</p>
+
+        <form id="signupForm">
+            <div class="form-group">
+                <label>الاسم الكامل</label>
+                <input type="text" id="name" required placeholder="أحمد محمد">
+            </div>
+
+            <div class="form-group">
+                <label>البريد الإلكتروني</label>
+                <input type="email" id="email" required placeholder="name@example.com">
+            </div>
+
+            <div class="form-group">
+                <label>كلمة المرور</label>
+                <input type="password" id="password" required placeholder="**">
+            </div>
+
+            <button type="submit" class="btn-primary">إنشاء الحساب</button>
+            
+            <div id="messageBox" style="margin-top: 15px; font-size: 14px; display: none;"></div>
+        </form>
+
+        <div class="links-container">
+            <span>لديك حساب بالفعل؟ <a href="user-login.html">سجل دخولك هنا</a></span>
+        </div>
+
+        <a href="index.html" class="back-link">عودة للصفحة الرئيسية</a>
+    </div>
+
+    <script>
+        const messageBox = document.getElementById('messageBox');
+
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            messageBox.style.display = 'none';
+            messageBox.textContent = '';
+
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/api/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const data = await response.json();
+
+                messageBox.style.display = 'block';
+
+                if (data.success) {
+                    messageBox.style.color = '#2ecc71';
+                    messageBox.textContent = '✅ ' + data.message;
+
+                    // تسجيل الدخول التلقائي بعد الإنشاء
+                    localStorage.setItem('userName', name);
+                    localStorage.setItem('userID', data.userID);
+
+                    setTimeout(() => {
+                        window.location.href = 'user-dashboard.html';
+                    }, 1500);
+                } else {
+                    messageBox.style.color = '#e74c3c';
+                    messageBox.textContent = '❌ ' + data.message;
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                messageBox.style.display = 'block';
+                messageBox.style.color = '#e74c3c';
+                messageBox.textContent = 'حدث خطأ في الاتصال بالسيرفر';
+            }
+        });
+    </script>
+
+</body>
+</html>
+
+
+
